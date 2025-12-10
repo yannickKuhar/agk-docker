@@ -133,7 +133,7 @@ def get_parser():
 
 
 def main():
-    os.chdir("/home/yannick/FRI/agk-docker")
+    # os.chdir("/home/yannick/FRI/agk-docker")
 
     svc_params = {"C": [1, 5], "kernel": ["rbf"], "gamma": ("scale", "auto")}
     rf_params = {"n_estimators": [50, 100], "criterion": ("gini", "entropy"), "max_depth": [10, 50]}
