@@ -20,7 +20,7 @@ def run_job(job):
 
 
 def main():
-    NUM_CORES = 30
+    NUM_CORES = 42
 
     models = ["svc", "rf", "ada"]
     datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109", "PROTEINS", "BZR", "COX2", "DHFR", "MUTAG",
