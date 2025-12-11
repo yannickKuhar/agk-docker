@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 import networkx as nx
+from rdkit import Chem
 
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import GridSearchCV
@@ -75,6 +76,34 @@ class Utility:
             graphs[ngc[u]][0].add((v, u))
 
         return list(graphs.values()), graph_labels
+
+    @staticmethod
+    def smiles_to_nx(smiles: str) -> nx.Graph:
+        # Parse with RDKit
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            raise ValueError("Invalid SMILES string")
+
+        G = nx.Graph()
+
+        # Add atoms as nodes
+        for atom in mol.GetAtoms():
+            idx = atom.GetIdx()
+            G.add_node(idx,
+                       symbol=atom.GetSymbol(),
+                       atomic_num=atom.GetAtomicNum(),
+                       formal_charge=atom.GetFormalCharge())
+
+        # Add bonds as edges
+        for bond in mol.GetBonds():
+            a1 = bond.GetBeginAtomIdx()
+            a2 = bond.GetEndAtomIdx()
+
+            G.add_edge(a1, a2,
+                       bond_type=str(bond.GetBondType()),
+                       is_aromatic=bond.GetIsAromatic())
+
+        return G
 
     @staticmethod
     def get_graphlet_index():

@@ -20,15 +20,12 @@ def run_job(job):
 
 
 def main():
-    NUM_CORES = 12
+    NUM_CORES = 30
 
-    models = ["ada"]
-    # models = ["svc", "rf", "ada"]
-    # datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109", "PROTEINS", "BZR", "COX2", "DHFR", "MUTAG",
-    #             "PTC_FM", "PTC_FR", "PTC_MM", "OHSU", "REDDIT-BINARY", "IMDB-BINARY",
-    #             "github_stargazers"]
-    datasets = ["MUTAG"]
-    kernels = ["vsko"]
+    models = ["svc", "rf", "ada"]
+    datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109", "PROTEINS", "BZR", "COX2", "DHFR", "MUTAG",
+                "PTC_FM", "PTC_FR", "PTC_MM", "BBBP", "clintox"]
+    kernels = ["gk"]
 
     jobs = list(product(models, datasets, kernels))
 

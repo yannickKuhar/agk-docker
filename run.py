@@ -1,12 +1,17 @@
 import os
+import csv
 import time
 import shap
 import datetime
 import argparse
 
 import numpy as np
+import networkx as nx
 
+from rdkit import Chem
 from sklearn.svm import SVC
+from rdkit.Chem import rdmolops
+from datasets import load_dataset
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.model_selection import GridSearchCV
@@ -26,6 +31,59 @@ from kernels.GeneralVertexSymmetryKernel import GeneralVertexSymmetryKernelOnes
 
 # Random seed.
 np.random.seed(42)
+
+
+def parse_bbbp(file="medical_datasets/BBBP.csv"):
+    graphs = []
+    labels = []
+
+    with open(file, mode='r') as file:
+        csv_file = list(csv.reader(file))
+        for lines in csv_file[1:]:
+            try:
+                g = Utility.smiles_to_nx(lines[3])
+                labels.append(int(lines[2]))
+                graphs.append(g)
+            except:
+                print(f"Invalid smiles: {lines[3]}")
+
+    return graphs, labels
+
+
+def get_graphs_from_smiles(ds):
+    graphs = []
+    labels = []
+
+    for example in ds:
+        try:
+            mol = Chem.MolFromSmiles(example['smiles'])
+            g = nx.Graph(rdmolops.GetAdjacencyMatrix(mol))
+            labels.append(example["target"])
+            graphs.append(g)
+        except:
+            print(f"Invalid smiles: {example['smiles']}")
+
+    return graphs, labels
+
+
+def parse_clintox():
+    ds = load_dataset("zpn/clintox")
+    graphs = []
+    labels = []
+
+    g1, l1 = get_graphs_from_smiles(ds["train"])
+    g2, l2 = get_graphs_from_smiles(ds["test"])
+    g3, l3 = get_graphs_from_smiles(ds["validation"])
+
+    graphs.extend(g1)
+    graphs.extend(g2)
+    graphs.extend(g3)
+
+    labels.extend(l1)
+    labels.extend(l2)
+    labels.extend(l3)
+
+    return graphs, labels
 
 
 def explanation_precision(importances, k=3):
@@ -115,10 +173,14 @@ def train_and_evaluate_classifier(X_train, X_test, y_train, y_test, model, param
 def get_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-d", "--dataset", default="AIDS", help="Dataset to use", choices=["AIDS",
-                                    "Mutagenicity", "NCI1", "NCI109", "PROTEINS", "BZR", "COX2", "DHFR", "MUTAG",
-                                    "PTC_FM", "PTC_FR", "PTC_MM", "OHSU", "REDDIT-BINARY", "IMDB-BINARY",
-                                    "github_stargazers"])
+    parser.add_argument("-d", "--dataset", default="AIDS", help="Dataset to use", choices=["AIDS", "BBBP", "clintox",
+                                                                                           "Mutagenicity", "NCI1",
+                                                                                           "NCI109", "PROTEINS", "BZR",
+                                                                                           "COX2", "DHFR", "MUTAG",
+                                                                                           "PTC_FM", "PTC_FR", "PTC_MM",
+                                                                                           "OHSU", "REDDIT-BINARY",
+                                                                                           "IMDB-BINARY",
+                                                                                           "github_stargazers"])
 
     parser.add_argument("-m", "--model", help="select ML model", default="knn",
                         type=str, choices=["svc", "rf", "ada", "lr", "nb", "knn"])
@@ -133,8 +195,6 @@ def get_parser():
 
 
 def main():
-    # os.chdir("/home/yannick/FRI/agk-docker")
-
     svc_params = {"C": [1, 5], "kernel": ["rbf"], "gamma": ("scale", "auto")}
     rf_params = {"n_estimators": [50, 100], "criterion": ("gini", "entropy"), "max_depth": [10, 50]}
     ada_params = {"n_estimators": [50, 100], "learning_rate": [0.1, 0.5, 1]}
@@ -196,20 +256,25 @@ def main():
 
     dataset = args.dataset
 
-    print(f"Training {model.__name__} on dataset {dataset}...")
-    row = [dataset]
-
     print("\t\tParsing dataset...")
-    graph_labels_file = f"./data/{dataset}/{dataset}_graph_labels.txt"
-    graph_edges_file = f"./data/{dataset}/{dataset}_A.txt"
-    graph_indicator_file = f"./data/{dataset}/{dataset}_graph_indicator.txt"
-
-    if args.phi:
-        G, y = Utility.parse_dataset_to_nx(graph_labels_file, graph_edges_file, graph_indicator_file)
+    if dataset == "BBBP":
+        G, y = parse_bbbp()
+    elif dataset == "clintox":
+        G, y = parse_clintox()
     else:
-        G, y = Utility.parse_dataset(graph_labels_file, graph_edges_file, graph_indicator_file)
+        graph_labels_file = f"./data/{dataset}/{dataset}_graph_labels.txt"
+        graph_edges_file = f"./data/{dataset}/{dataset}_A.txt"
+        graph_indicator_file = f"./data/{dataset}/{dataset}_graph_indicator.txt"
+
+        if args.phi:
+            G, y = Utility.parse_dataset_to_nx(graph_labels_file, graph_edges_file, graph_indicator_file)
+        else:
+            G, y = Utility.parse_dataset(graph_labels_file, graph_edges_file, graph_indicator_file)
 
     print("\t\tParsing done.")
+
+    print(f"Training {model.__name__} on dataset {dataset}...")
+    row = [dataset]
 
     print("\t\tCalculating Train test split...")
     G_train, G_test, y_train, y_test = train_test_split(G, y, test_size=0.3)
@@ -228,8 +293,8 @@ def main():
         results.append(row)
     else:
         if args.phi:
-            G_train = k.vectorise_dataset(G_train)
-            G_test = k.vectorise_dataset_with_keys(G_test)
+            G_train = np.array(k.vectorise_dataset(G_train))
+            G_test = np.array(k.vectorise_dataset_with_keys(G_test))
         else:
             G_train, G_test, fitting_time = k.get_train_test_sets(G_train, G_test)
 
