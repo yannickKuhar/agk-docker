@@ -5,8 +5,8 @@ from itertools import product
 
 
 def run_job(job):
-    model, dataset = job
-    cmd = f"python3 nsga2.py -m {model} -d {dataset} -g"
+    model, dataset, i = job
+    cmd = f"python3 nsga2.py -m {model} -d {dataset} -i {i}"
 
     print(f"[INFO] Running: {cmd}")
     exit_code = os.system(cmd)
@@ -17,21 +17,17 @@ def run_job(job):
 
 def main():
     NUM_CORES = 12
-    # datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109",
-    #             "PROTEINS", "BZR", "COX2", "DHFR","MUTAG", "PTC_FM", "PTC_FR", "PTC_MM",
-    #             "OHSU", "REDDIT-BINARY", "IMDB-BINARY", "github_stargazers"]
 
-    datasets = ["AIDS"]
+    datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109",
+                "PROTEINS", "BZR", "COX2", "DHFR","MUTAG", "PTC_FM", "PTC_FR", "PTC_MM",
+                "OHSU", "REDDIT-BINARY", "IMDB-BINARY", "github_stargazers"]
 
-    # , "Mutagenicity", "NCI1", "NCI109",
-    # "PROTEINS", "BZR", "COX2", "DHFR", "MUTAG",
-    # "PTC_FM", "PTC_FR", "PTC_MM"]
+    models = ["svc", "ada", "rf"]
+    idxs = list(range(30))
 
+    jobs = list(product(models, datasets, idxs))
 
-
-    models = ["ada"]
-
-    jobs = list(product(models, datasets))
+    print(f"[INFO] Running {len(jobs)} jobs")
 
     with mp.Pool(NUM_CORES) as pool:
         results = pool.map(run_job, jobs)

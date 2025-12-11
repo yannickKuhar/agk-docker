@@ -20,4 +20,4 @@ RUN cd orcapy && python setup.py build
 RUN cd orcapy && python setup.py install
 
 # Run your main script
-CMD ["python", "auto_run.py"]
+CMD ["python", "opt_auto_run.py"]

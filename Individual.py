@@ -130,7 +130,7 @@ class Individual:
 
             self.xai_precision = self.explanation_precision(self.importances)
 
-            print(self.accuracy)
+            # print(self.accuracy)
         else:
             self.accuracy = 0
             self.f1_score = 0
