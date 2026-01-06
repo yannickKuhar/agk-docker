@@ -16,14 +16,14 @@ def run_job(job):
 
 
 def main():
-    NUM_CORES = 60
+    NUM_CORES = 15
     # datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109",
     #             "PROTEINS", "BZR", "COX2", "DHFR","MUTAG", "PTC_FM", "PTC_FR", "PTC_MM",
     #             "OHSU", "REDDIT-BINARY", "IMDB-BINARY", "github_stargazers"]
 
-    datasets = ["clintox", "BBBP"]
+    datasets = ["BBBP", "clintox"]
 
-    models = ["svc", "ada", "rf"]
+    models = ["rf", "ada", "svc"]
 
     jobs = list(product(models, datasets))
 

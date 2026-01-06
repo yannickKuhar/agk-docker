@@ -8,6 +8,7 @@ import numpy as np
 import networkx as nx
 from rdkit import Chem
 import multiprocessing as mp
+import matplotlib.pyplot as plt
 
 from rdkit.Chem import rdmolops
 from datasets import load_dataset
@@ -253,26 +254,24 @@ def get_parser():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-d", "--dataset", help="dataset", default="MUTAG", type=str,
-                        choices=["AIDS", "BBBP", "clintox", "Mutagenicity", "NCI1", "NCI109", "PROTEINS", "BZR",
-                                 "COX2", "DHFR", "MUTAG", "PTC_FM", "PTC_FR", "PTC_MM", "OHSU", "REDDIT-BINARY",
+                        choices=["AIDS", "Mutagenicity", "NCI1", "NCI109", "BBBP", "PROTEINS", "BZR", "COX2", "DHFR",
+                                 "clintox", "MUTAG", "PTC_FM", "PTC_FR", "PTC_MM", "OHSU", "REDDIT-BINARY",
                                  "IMDB-BINARY", "github_stargazers"])
 
     parser.add_argument("-m", "--model", help="select ML model", default="svc", type=str)
     parser.add_argument("-g", "--graphs", help="graph dataset or loaded x", action="store_true")
-    parser.add_argument("-i", "--index", help="vectorised sample index", default=0, type=int)
 
     return parser
 
 
 def main():
     # os.chdir("/home/yannick/FRI/DR/advanced-graph-kernels/optimization")
-    # os.chdir("/home/yannick/FRI/agk-docker")
+    # os.chdir("/home/yannick/FRI/advanced-graph-kernels/")
 
     parser = get_parser()
     args = parser.parse_args()
 
     dataset = args.dataset
-    sample_index = args.index
 
     svc_params = {"C": [1, 5], "kernel": ["rbf"], "gamma": ("scale", "auto")}
     rf_params = {"n_estimators": [50, 100], "criterion": ("gini", "entropy"), "max_depth": [10, 50]}
@@ -288,7 +287,7 @@ def main():
         print("[WARNING] Invalid model, default selected is KNN.")
         model, params = (SVC, svc_params)
 
-    # print(dataset, args.model, f"graphs: {args.graphs}")
+    print(dataset, args.model, f"graphs: {args.graphs}")
 
     if args.graphs:
         if dataset == "BBBP":
@@ -304,15 +303,15 @@ def main():
         G_train, G_test, y_train, y_test = train_test_split(G, y, test_size=0.3)
         G_train, G_valid, y_train, y_valid = train_test_split(G_train, y_train, test_size=0.3)
     else:
-        file_x = f"vectorised_and_reduced_datasets/sample_{sample_index}_{dataset}.csv"
-        file_y = f"vectorised_and_reduced_datasets/sample_{sample_index}_{dataset}_classes.csv"
+        file_x = f"../vectorised_and_reduced_datasets/sample_{dataset}.csv"
+        file_y = f"../vectorised_and_reduced_datasets/sample_{dataset}_classes.csv"
         G, y = Utility.read_csv(file_x, file_y)
 
         G_train, G_test, y_train, y_test = train_test_split(G, y, test_size=0.3)
         G_train, G_valid, y_train, y_valid = train_test_split(G_train, y_train, test_size=0.3)
 
-    pop_size = 1
-    max_gen =0
+    pop_size = 10
+    max_gen = 50
     vectorised = not args.graphs
 
     # Initialization
@@ -385,9 +384,9 @@ def main():
 
     print("---------------")
 
-    name = f"result_{model.__name__}_{dataset}_sample_{sample_index}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_log.txt"
+    name = f"results_{model.__name__}_{dataset}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_log.txt"
 
-    with open(f"logs/{name}", "w") as f:
+    with open(f"Results/{name}", "w") as f:
         for s in solution:
             f.write(f"Graphlet subset: {s.g_subset}\n")
             f.write(f"Symmetry Features: {s.s_subset}\n")
@@ -426,4 +425,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

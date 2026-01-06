@@ -3,8 +3,8 @@ import random
 import numpy as np
 import pandas as pd
 import networkx as nx
-from rdkit import Chem
 
+from rdkit import Chem
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score

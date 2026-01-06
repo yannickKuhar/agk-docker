@@ -1,3 +1,4 @@
+import numpy as np
 import orcapy.orca as orca
 from kernels.GraphletKernel import GraphletKernel
 
@@ -15,7 +16,7 @@ class GeneralGraphletKernel(GraphletKernel):
             general_count = [graphlet_counts[i] for i in self.graphlet_index]
             counts.append(general_count)
 
-        return counts
+        return np.asarray(counts)
 
     vectorise_dataset_with_keys = vectorise_dataset
         

@@ -5,8 +5,10 @@ import datetime
 import numpy as np
 
 from sklearn.metrics import f1_score, accuracy_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV
 
+from kernels.Utility import Utility
+# from kernels.GeneralVertexSymmetryKernel import GeneralVertexSymmetryKernelOnes
 from kernels.GeneralGraphletKernel import GeneralGraphletKernel
 
 
@@ -102,7 +104,7 @@ class Individual:
 
         # print(X_train)
         train_shape = X_train.shape
-        # print(train_shape)
+        print(train_shape)
 
         if train_shape[1] > 0:
             self.model = model
@@ -130,7 +132,7 @@ class Individual:
 
             self.xai_precision = self.explanation_precision(self.importances)
 
-            # print(self.accuracy)
+            print(self.accuracy)
         else:
             self.accuracy = 0
             self.f1_score = 0
