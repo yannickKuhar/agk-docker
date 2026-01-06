@@ -1,5 +1,5 @@
 import orcapy.orca as orca
-from GraphletKernel import GraphletKernel
+from kernels.GraphletKernel import GraphletKernel
 
 
 class GeneralGraphletKernel(GraphletKernel):

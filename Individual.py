@@ -5,9 +5,9 @@ import datetime
 import numpy as np
 
 from sklearn.metrics import f1_score, accuracy_score
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
-from kernels.GeneralVertexSymmetryKernel import GeneralVertexSymmetryKernelOnes
+from kernels.GeneralGraphletKernel import GeneralGraphletKernel
 
 
 class Individual:
@@ -16,7 +16,7 @@ class Individual:
         self.g_subset = g_subset
         self.s_subset = s_subset
 
-        self.kernel = GeneralVertexSymmetryKernelOnes(self.g_subset, self.s_subset)
+        self.kernel = GeneralGraphletKernel(self.g_subset)
 
         self.accuracy = 0
         self.f1_score = 0

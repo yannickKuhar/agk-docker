@@ -1,15 +1,18 @@
 import os
+import csv
 import math
 import random
 import argparse
 import datetime
 import numpy as np
+import networkx as nx
+from rdkit import Chem
 import multiprocessing as mp
-import matplotlib.pyplot as plt
+
+from rdkit.Chem import rdmolops
+from datasets import load_dataset
 
 from functools import partial
-
-from numpy.random import sample
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 
 from sklearn.model_selection import train_test_split
@@ -19,6 +22,59 @@ from kernels.Utility import Utility
 from Individual import Individual
 
 np.random.seed(42)
+
+
+def parse_bbbp(file="medical_datasets/BBBP.csv"):
+    graphs = []
+    labels = []
+
+    with open(file, mode='r') as file:
+        csv_file = list(csv.reader(file))
+        for lines in csv_file[1:]:
+            try:
+                g = Utility.smiles_to_nx(lines[3])
+                labels.append(int(lines[2]))
+                graphs.append(g)
+            except:
+                print(f"Invalid smiles: {lines[3]}")
+
+    return graphs, labels
+
+
+def get_graphs_from_smiles(ds):
+    graphs = []
+    labels = []
+
+    for example in ds:
+        try:
+            mol = Chem.MolFromSmiles(example['smiles'])
+            g = nx.Graph(rdmolops.GetAdjacencyMatrix(mol))
+            labels.append(example["target"])
+            graphs.append(g)
+        except:
+            print(f"Invalid smiles: {example['smiles']}")
+
+    return graphs, labels
+
+
+def parse_clintox():
+    ds = load_dataset("zpn/clintox")
+    graphs = []
+    labels = []
+
+    g1, l1 = get_graphs_from_smiles(ds["train"])
+    g2, l2 = get_graphs_from_smiles(ds["test"])
+    g3, l3 = get_graphs_from_smiles(ds["validation"])
+
+    graphs.extend(g1)
+    graphs.extend(g2)
+    graphs.extend(g3)
+
+    labels.extend(l1)
+    labels.extend(l2)
+    labels.extend(l3)
+
+    return graphs, labels
 
 
 def create_and_evaluate(_, model, params, G_train, G_valid, y_train, y_valid, vectorised):
@@ -235,11 +291,16 @@ def main():
     # print(dataset, args.model, f"graphs: {args.graphs}")
 
     if args.graphs:
-        graph_labels_file = f"../data/{dataset}/{dataset}_graph_labels.txt"
-        graph_edges_file = f"../data/{dataset}/{dataset}_A.txt"
-        graph_indicator_file = f"../data/{dataset}/{dataset}_graph_indicator.txt"
+        if dataset == "BBBP":
+            G, y = parse_bbbp()
+        elif dataset == "clintox":
+            G, y = parse_clintox()
+        else:
+            graph_labels_file = f"../data/{dataset}/{dataset}_graph_labels.txt"
+            graph_edges_file = f"../data/{dataset}/{dataset}_A.txt"
+            graph_indicator_file = f"../data/{dataset}/{dataset}_graph_indicator.txt"
+            G, y = Utility.parse_dataset_to_nx(graph_labels_file, graph_edges_file, graph_indicator_file)
 
-        G, y = Utility.parse_dataset_to_nx(graph_labels_file, graph_edges_file, graph_indicator_file)
         G_train, G_test, y_train, y_test = train_test_split(G, y, test_size=0.3)
         G_train, G_valid, y_train, y_valid = train_test_split(G_train, y_train, test_size=0.3)
     else:

@@ -5,8 +5,8 @@ from itertools import product
 
 
 def run_job(job):
-    model, dataset, i = job
-    cmd = f"python3 nsga2.py -m {model} -d {dataset} -i {i}"
+    model, dataset = job
+    cmd = f"python3 nsga2.py -m {model} -d {dataset} -g"
 
     print(f"[INFO] Running: {cmd}")
     exit_code = os.system(cmd)
@@ -16,18 +16,16 @@ def run_job(job):
 
 
 def main():
-    NUM_CORES = 12
+    NUM_CORES = 60
+    # datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109",
+    #             "PROTEINS", "BZR", "COX2", "DHFR","MUTAG", "PTC_FM", "PTC_FR", "PTC_MM",
+    #             "OHSU", "REDDIT-BINARY", "IMDB-BINARY", "github_stargazers"]
 
-    datasets = ["AIDS", "Mutagenicity", "NCI1", "NCI109",
-                "PROTEINS", "BZR", "COX2", "DHFR","MUTAG", "PTC_FM", "PTC_FR", "PTC_MM",
-                "OHSU", "REDDIT-BINARY", "IMDB-BINARY", "github_stargazers"]
+    datasets = ["clintox", "BBBP"]
 
     models = ["svc", "ada", "rf"]
-    idxs = list(range(30))
 
-    jobs = list(product(models, datasets, idxs))
-
-    print(f"[INFO] Running {len(jobs)} jobs")
+    jobs = list(product(models, datasets))
 
     with mp.Pool(NUM_CORES) as pool:
         results = pool.map(run_job, jobs)
